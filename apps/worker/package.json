@@ -1,0 +1,24 @@
+{
+  "name": "@job-aggregator/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@job-aggregator/config": "workspace:*",
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@job-aggregator/db": "workspace:*",
+    "@job-aggregator/queue": "workspace:*",
+    "@job-aggregator/shared-types": "workspace:*",
+    "resend": "^6.25.0"
+  }
+}

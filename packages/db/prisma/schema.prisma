@@ -1,0 +1,123 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// A registered user. Owns saved searches and receives alert emails
+/// when a new job matches one of them.
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  savedSearches SavedSearch[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+/// A single job listing, ingested from an external source (Adzuna, Jooble, etc).
+/// `fingerprint` is the deduplication key from ADR-002: normalized
+/// company + title + location, hashed. The @unique constraint on it is
+/// what makes "never insert the same job twice" a real database
+/// guarantee rather than an application-level check — critical because
+/// multiple ingestion workers can pull from different sources concurrently,
+/// and a race between two inserts must fail safely, not silently duplicate.
+model Job {
+  id          String   @id @default(cuid())
+  fingerprint String   @unique
+
+  // Raw fields as ingested — kept alongside the normalized fingerprint
+  // so the UI can show the job's actual original wording, not a
+  // normalized/lowercased version.
+  title       String
+  company     String
+  location    String
+  description String   @db.Text
+  url         String
+  salaryMin   Int?
+  salaryMax   Int?
+  remote      Boolean  @default(false)
+  source      String   // e.g. "adzuna", "jooble" — which API this came from
+  sourceId    String   // the source's own ID for this listing, for traceability
+
+  postedAt  DateTime?
+  createdAt DateTime @default(now())
+
+  matches SearchMatch[]
+
+  // GIN-indexed generated tsvector column for Postgres full-text search
+  // (ADR-004). Prisma can't express `GENERATED ALWAYS AS ... STORED`
+  // natively yet, so this column and its index are added via a raw SQL
+  // migration step — see the note after this schema.
+    searchVector Unsupported("tsvector")? @map("search_vector")
+
+  @@index([source])
+  @@index([postedAt])
+  @@map("jobs")
+}
+
+/// A user's saved search criteria. After each ingestion cycle, the
+/// worker checks every SavedSearch against newly-inserted Jobs and
+/// creates a SearchMatch (then queues an alert email) for any that
+/// qualify. This is exactly the "find saved searches matching this job"
+/// query ADR-003 flagged as relational-by-nature — it's a real join,
+/// not something you'd want to hand-roll against a document store.
+model SavedSearch {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Filter criteria — all optional except keyword, matching
+  // the filters described in ADR-004 (keyword, location, remote, salary).
+  keyword      String
+  location     String?
+  remoteOnly   Boolean  @default(false)
+  minSalary    Int?
+
+  createdAt DateTime @default(now())
+
+  matches SearchMatch[]
+
+  @@index([userId])
+  @@map("saved_searches")
+}
+
+/// The many-to-many join between SavedSearch and Job: "this job matched
+/// this saved search." Existence of a row here is itself the alert
+/// trigger — the worker creates one, then queues an alert-email job
+/// referencing it. The compound unique constraint prevents the same
+/// job from re-triggering an alert for the same saved search if the
+/// matching job runs more than once (e.g. after a retry).
+model SearchMatch {
+  id            String      @id @default(cuid())
+  savedSearchId String
+  savedSearch   SavedSearch @relation(fields: [savedSearchId], references: [id], onDelete: Cascade)
+  jobId         String
+  job           Job         @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  matchedAt   DateTime  @default(now())
+  alertSentAt DateTime? // null until the alert email queue job actually sends it
+
+  @@unique([savedSearchId, jobId])
+  @@index([jobId])
+  @@map("search_matches")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}

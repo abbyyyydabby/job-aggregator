@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+:root {
+  font-family: var(--font-dm-sans), sans-serif;
+  color: #eef2ed;
+  background: #101513;
+  font-synthesis: none;
+  --bg: #101513;
+  --panel: #17201c;
+  --panel-light: #1d2923;
+  --panel-hover: #202e27;
+  --line: #2a3730;
+  --line-soft: #202b25;
+  --muted: #899891;
+  --muted-dim: #5f6c65;
+  --lime: #b8f35b;
+  --lime-dim: rgba(184, 243, 91, 0.12);
+  --cream: #f6f3e8;
+
+  --tint-green-bg: rgba(184, 243, 91, 0.14);
+  --tint-green-fg: #b8f35b;
+  --tint-amber-bg: rgba(224, 168, 106, 0.14);
+  --tint-amber-fg: #e0a86a;
+  --tint-blue-bg: rgba(122, 168, 231, 0.14);
+  --tint-blue-fg: #7aa8e7;
+  --tint-orange-bg: rgba(224, 122, 95, 0.14);
+  --tint-orange-fg: #e07a5f;
+  --tint-purple-bg: rgba(168, 139, 250, 0.14);
+  --tint-purple-fg: #a88bfa;
+
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--bg);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-dim);
+}
