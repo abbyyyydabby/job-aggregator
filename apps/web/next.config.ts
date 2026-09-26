@@ -1,11 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  webpack: (config) => {
-    config.resolve.extensionAlias = {
-      ".js": [".ts", ".tsx", ".js"],
-    };
-    return config;
+  turbopack: {
+    resolveExtensions: [".mjs", ".mts", ".ts", ".tsx", ".js", ".jsx", ".json"],
   },
 };
 
