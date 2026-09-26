@@ -1,2 +1,2 @@
-export * from "./provider.js";
-export { PostgresSearchProvider } from "./postgres-provider.js";
+export * from "./provider";
+export { PostgresSearchProvider } from "./postgres-provider";
