@@ -11,6 +11,24 @@ import { QUEUE_NAMES, redisConnection } from "@job-aggregator/queue";
 import { runIngestion } from "./ingest.js";
 import { recordNewMatches } from "./matching.js";
 import { prisma } from "@job-aggregator/db";
+import http from "node:http";
+
+// Render's free "Web Service" tier requires something listening on
+// a port to consider the service healthy and to receive the pings
+// that keep it from sleeping. This has nothing to do with the actual
+// job — it's purely a heartbeat endpoint for Render's health checks
+// and the external uptime pinger.
+const PORT = process.env.PORT || 3001;
+http
+  .createServer((req, res) => {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("worker alive");
+  })
+  .listen(PORT, () => {
+    console.log(
+      `[ingestion-worker] Heartbeat server listening on port ${PORT}`
+    );
+  });
 
 export const ingestionWorker = new Worker(
   QUEUE_NAMES.INGESTION,
