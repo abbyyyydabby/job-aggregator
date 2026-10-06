@@ -209,7 +209,3 @@ What I'd revisit as this grows is listed in full at the end of the [system desig
 *(Updated as each piece is built — not all boxes are checked yet.)*
 
 ---
-
-## License
-
-MIT
